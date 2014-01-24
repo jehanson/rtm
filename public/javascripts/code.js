@@ -9,19 +9,6 @@ $(document).ready(function () {
     var variable = "";
 
 
-    //read tickers from HASH
-    var tickers = window.location.hash.substr(1).split('/');
-    if (tickers.length == 2) {
-        base = tickers[1];
-        variable = tickers[0];
-    } else {
-        base = "VFINX";
-        variable = "BOGIX";
-    }
-
-    $("#base").val(base);
-    $("#compare").val(variable);
-
     function setHash() {
         window.location.hash = variable + "/" + base;
 
@@ -76,5 +63,29 @@ $(document).ready(function () {
         return false;
     });
 
-    $("#loadStuff").click();
+    //read tickers from HASH
+    function loadFromHash() {
+        var tickers = window.location.hash.substr(1).split('/');
+        if (tickers.length == 2) {
+            base = tickers[1];
+            variable = tickers[0];
+        } else {
+            base = "VFINX";
+            variable = "BOGIX";
+        }
+
+        $("#base").val(base);
+        $("#compare").val(variable);
+        $("#loadStuff").click();
+    }
+
+    loadFromHash();
+
+    window.onpopstate = loadFromHash
+    window.onpushstate = loadFromHash
+
+
+
+
+
 });
