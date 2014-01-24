@@ -35,14 +35,14 @@ $(document).ready(function () {
             var inputRows = x.split('\n');
             var outputRows = [];
 
-            var min = 0;
-            var max = 0;
+            var min = 1;
+            var max = 1;
 
             for (var i = 0; i < inputRows.length; i++) {
                 var fields = inputRows[i].split(',');
                 if (fields.length == 2) {
                     var date = new Date(fields[0]);
-                    var value = Number(fields[1]) - 1;
+                    var value = Number(fields[1]);
 
                     if (value > max) max = value;
                     if (value < min) min = value;

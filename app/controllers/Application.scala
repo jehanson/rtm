@@ -11,7 +11,7 @@ import java.text.DecimalFormat
 object Application extends Controller {
 
   def index = Action {
-    Ok(views.html.index("Your new application is ready!!!"))
+    Ok(views.html.index())
   }
 
   def priceHistory(ticker: String) = Action {
@@ -51,7 +51,7 @@ object Application extends Controller {
 
   def timeSeriesCsv(data: SortedMap[LocalDate, Double]): Result = {
 
-    val format = new DecimalFormat("0.00000")
+    val format = new DecimalFormat("0.0000000")
 
     var builder = StringBuilder.newBuilder
     for ((date, value) <- data.toSeq) {
