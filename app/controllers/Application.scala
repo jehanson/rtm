@@ -6,6 +6,7 @@ import play.api.libs.json.{Json, JsArray}
 import service.Loader
 import scala.collection.SortedMap
 import org.joda.time.LocalDate
+import java.text.DecimalFormat
 
 object Application extends Controller {
 
@@ -49,11 +50,14 @@ object Application extends Controller {
   }
 
   def timeSeriesCsv(data: SortedMap[LocalDate, Double]): Result = {
+
+    val format = new DecimalFormat("0.00000")
+
     var builder = StringBuilder.newBuilder
     for ((date, value) <- data.toSeq) {
       builder.append(date)
       builder.append(",")
-      builder.append(value)
+      builder.append(format.format(value))
       builder.append("\n")
     }
     Ok(builder.result())

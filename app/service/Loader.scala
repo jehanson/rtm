@@ -58,7 +58,7 @@ object Loader {
     }
   }
 
-  def compare(baseTicker: String, otherTicker: String, targetEqualDate: LocalDate = LocalDate.now()): Future[TimeSeries] = {
+  def compare(baseTicker: String, otherTicker: String, targetEqualDate: LocalDate = new LocalDate(1900,1,1)): Future[TimeSeries] = {
 
     val futures = Seq(load(baseTicker), load(otherTicker))
 
