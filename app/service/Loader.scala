@@ -8,6 +8,7 @@ import scala.concurrent.Future
 import scala.collection.{SortedSet, SortedMap}
 import scala.concurrent.ExecutionContext.Implicits.global
 import java.net.URLEncoder
+import model.Portfolio
 
 
 object Loader {
@@ -22,7 +23,7 @@ object Loader {
     .build[String, SortedMap[LocalDate, Double]]
 
 
-  def load(ticker: String): Future[SortedMap[LocalDate, Double]] = {
+  def load(ticker: String): Future[TimeSeries] = {
     val result = cache.getIfPresent(ticker)
     if (result != null) Future.successful(result)
     else {
@@ -31,6 +32,40 @@ object Loader {
         case x => cache.put(ticker, x)
       }
       futureResult
+    }
+  }
+
+  def portfolioValue(values: Seq[(Double, TimeSeries)]): TimeSeries = {
+    var commonDates = values.head._2.keySet
+    for ((_, series) <- values.tail) commonDates = commonDates intersect series.keySet
+
+    val dateWithPrev = commonDates.tail.zip(commonDates)
+
+    val totalWeight = values.map(_._1).sum
+    var value: Double = 1
+
+
+    var builder = SortedMap.newBuilder[LocalDate, Double]
+    builder += commonDates.head -> 1
+    for ((today, yesterday) <- dateWithPrev) {
+      var change: Double = 0
+      for ((weight, series) <- values) {
+        change += (weight / totalWeight) * (series(today) / series(yesterday))
+      }
+      value *= change
+      builder += today -> value
+    }
+
+    builder.result()
+  }
+
+
+  def load(portfolio: Portfolio): Future[TimeSeries] = {
+    var tickers = portfolio.tickerWeights.keys.toSeq
+    for (data <- Future.sequence(tickers.map(load))) yield {
+      val seriesWeights = for ((ticker, data) <- tickers.zip(data)) yield (portfolio.tickerWeights(ticker), data)
+
+      portfolioValue(seriesWeights)
     }
   }
 
@@ -58,9 +93,9 @@ object Loader {
     }
   }
 
-  def compare(baseTicker: String, otherTicker: String, targetEqualDate: LocalDate = new LocalDate(1900,1,1)): Future[TimeSeries] = {
+  def compare(baseTicker: String, otherTicker: String, targetEqualDate: LocalDate = new LocalDate(1900, 1, 1)): Future[TimeSeries] = {
 
-    val futures = Seq(load(baseTicker), load(otherTicker))
+    val futures = Seq(load(Portfolio.parse(baseTicker)), load(Portfolio.parse(otherTicker)))
 
     Future.sequence(futures).map {
       case Seq(base, other) => merge(base, other, targetEqualDate)
