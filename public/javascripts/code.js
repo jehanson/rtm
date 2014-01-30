@@ -2,9 +2,6 @@ google.load('visualization', '1', {'packages': ['annotatedtimeline']});
 
 $(document).ready(function () {
 
-    var defaultBase = "VFINX";
-    var defaultVariable = "BOGIX";
-
     var base = "";
     var variable = "";
 
@@ -70,8 +67,8 @@ $(document).ready(function () {
             base = tickers[1];
             variable = tickers[0];
         } else {
-            base = "VFINX";
-            variable = "BOGIX";
+            base = "VTI*67,VXUS*27,BND*10";
+            variable = "VTIVX";
         }
 
         $("#base").val(base);

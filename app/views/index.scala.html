@@ -12,13 +12,17 @@
     </head>
     <body>
         
-        Displays John Bogle's <a href="http://www.vanguard.com/bogle_site/sp20020626.html">Telltale chart</a> for two securities. List the fund/stock to examine first, and the benchmark fund second.
+        <p>Displays John Bogle's <a href="http://www.vanguard.com/bogle_site/sp20020626.html">Telltale chart</a> for two portfolios.</p>
+
+
+        <p>Build each portfolio from one or more ticker symbols, separating each with a comma. For example: <code>VTI,VXUS,BND</code></p>
+
+        <p>If you want to overweight some components of the portfolio, you can do that too: <code>VTI*4,VXUS*2,BND</code></p>
 
         <form>
             Hypthetical Portfolio: <input type="text" id="compare" size="60" /> <br/>
             Baseline Portfolio: <input type="text" id="base" size="60"/> <br/>
                 <button type="submit" id="loadStuff">Load Comparison</button>
-
 
         </form>
 
