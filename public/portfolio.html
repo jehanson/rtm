@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en-US">
+    <head>
+        <meta charset="UTF-8">
+        <title></title>
+        <link rel="stylesheet" media="screen" href="stylesheets/main.css">
+        <link rel="shortcut icon" type="image/png" href="images/favicon.png">
+        <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+        <script type='text/javascript' src='http://www.google.com/jsapi'></script>
+
+		<script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/lodash.js/2.4.1/lodash.js">
+			
+		</script>
+
+
+		<script type="text/javascript" charset="utf-8">
+			var order = ["lv", "lb", "lg", "mv", "mb", "mg", "sv", "sb", "sg"];
+			var inputs = {
+				VTSAX: [23,23,26, 6, 6, 7, 3, 3, 3],
+				VVIAX: [46,33, 8, 9, 4, 0, 0, 0, 0],
+				VFIAX: [29,28,31, 5, 4, 3, 0, 0, 0],
+				VIGAX: [ 5,19,57, 2, 7,11, 0, 0, 0],
+				IWS:   [ 6,13, 6,37,23, 7, 4, 2, 1],
+				VIMSX: [ 1, 7,10,27,28,28, 0, 0, 0],
+				IWP:   [ 1, 9,24, 7,22,35, 0, 0, 0],
+				VISVX: [ 0, 0, 0,19,20, 3,30,23, 5],
+				VSMAX: [ 0, 0, 0,11,16,16,18,19,19],
+				VISGX: [ 0, 0, 0, 2,11,33, 3,15,36]
+			};
+			
+			function seek(target) {
+				var weights = _.mapValues(inputs, function(x) {
+					return 100;
+				});
+				var keys = _.keys(weights);
+				
+				var iterations = 0;
+				var keepGoing = true;
+				var lastTicker = "???";
+				var lastAction = "???";
+				do {
+					var baseline = squareDiff(target, buildStyleBox(weights));
+				
+				
+					var stepSize = 1;
+				
+					var hypo = _.mapValues(weights, function(oldVal, key) {
+						return [testDistance(key, stepSize), testDistance(key, -1*stepSize)];
+					});
+				
+					var bestAdd = _.max(keys, function(key) {
+						return hypo[key][0];
+					});
+				
+					var bestRemove = _.max(keys, function(key) {
+						return hypo[key][1];
+					});
+					
+					var addScore = hypo[bestAdd][0];
+					var removeScore = hypo[bestRemove][1];
+					
+					var score = Math.max(addScore,removeScore);
+					
+					var thisTicker;
+					var thisAction;
+					iterations += 1;
+					if (score < 0 || iterations > 10000) {
+						keepGoing = false
+					} else {
+						if (addScore == score) {
+							console.log("adding " + bestAdd + " " + iterations);
+							weights[bestAdd] += stepSize;
+							thisTicker = bestAdd;
+							thisAction = "add";
+							
+						} else {
+							console.log("removing " + bestRemove); 
+							weights[bestRemove] -= stepSize;
+							thisTicker = bestRemove;
+							thisAction = "remove";
+						}
+					}
+					if (lastTicker == thisTicker && lastAction != thisAction) {
+						console.log("stopping");
+						keepGoing = false;
+					}
+					lastTicker = thisTicker;
+					lastAction = thisAction;
+					
+					
+				} while (keepGoing);
+
+				
+				function testDistance(key, delta) {
+					if (delta > 0 && weights[key] >= 200) return NaN;
+					if (delta < 0 && weights[key] <= 0) return NaN;
+					
+					weights[key] += delta;
+					var stylebox = buildStyleBox(weights);
+					var improvement = baseline - squareDiff(stylebox, target);
+					weights[key] -= delta;
+					return improvement;
+				}
+				
+				
+				console.log(weights);
+				return weights;
+			}
+
+			function buildStyleBox(weights) {
+				var result = [0,0,0,0,0,0,0,0,0];
+				_.forEach(weights, function(weight, key) {
+					_.forEach(inputs[key], function(styleBoxAllocation, styleBoxId) {
+						result[styleBoxId] += weight * styleBoxAllocation;
+					});
+				});
+				return normalize(result);
+			}
+			
+			function squareDiff(a, b) {
+				var sum = 0;
+				for (var i =0;i<9;i++) {
+					var diff = a[i]-b[i];
+					sum = sum + (diff*diff);
+				}
+				return sum;
+			}
+			
+			function normalize(array) {
+				var sum = _.reduce(array, function(a,b) {
+					return a + b;
+				});
+				var multiplier = 100 / sum;
+				
+				return _.map(array, function(x) {
+					return x * multiplier;
+				});
+			};
+			
+			function write(array) {
+				var targets = _.zip(order, array);
+				
+				_.forEach(targets, function(x) {
+					var selector = "#" + x[0];
+					var value = x[1];
+					$(selector).val(value);
+				});
+			}
+			
+			function nearest(data) {
+				var diffs = _.mapValues(inputs, function(v) {
+					return squareDiff(data, v);
+				})
+				console.log(diffs);
+				return "bob";
+			}
+
+			
+			function weightsToString(weights) {
+				var strings = _.map(weights, function(weight, key) {
+					if (weight == 0) return ""
+					else return key + "*" + weight;
+				});
+				strings = _.filter(strings);
+				return strings.join();
+			}
+		
+			$(document).ready(function() {
+				
+				
+				
+				
+				
+				$("#load").click(function(e) {
+					e.preventDefault();
+					
+
+					
+					var data = _.map(order, function(x) {
+						var string = $("#" + x).val();
+						var num = parseInt(string);
+						if (isNaN(num)) num = 0;
+						return num;
+					});
+					
+					data = normalize(data);
+					
+					// write(data);
+					
+					var result = seek(data);
+					
+					var outputStyleBox = _.map(buildStyleBox(result), function(x) {
+						return Math.round(x);
+					});
+					
+					console.log(outputStyleBox);
+					
+					console.log(weightsToString(result));
+					
+				});
+				
+				
+				
+			});
+
+		</script>
+
+    </head>
+    <body>
+		
+		<form>
+		<input type="text" id="lv"> <input type="text" id="lb"> <input type="text" id="lg"> </br>
+		<input type="text" id="mv"> <input type="text" id="mb"> <input type="text" id="mg"> </br>
+		<input type="text" id="sv"> <input type="text" id="sb"> <input type="text" id="sg"> </br>
+		<button type="submit" id="load"> calucate </button>
+        </form>
+
+		<div id="output"></div>
+
+    </body>
+</html>

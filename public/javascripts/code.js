@@ -67,7 +67,7 @@ $(document).ready(function () {
             base = tickers[1];
             variable = tickers[0];
         } else {
-            base = "VTI*67,VXUS*27,BND*10";
+            base = "VTI*63,VXUS*27,BND*10";
             variable = "VTIVX";
         }
 
